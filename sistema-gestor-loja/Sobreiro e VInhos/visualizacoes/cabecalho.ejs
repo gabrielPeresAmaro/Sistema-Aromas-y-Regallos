@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobreiro Vinos y Regalos</title>
+    <link rel="stylesheet" href="/css/estilo.css">
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-container">
+            <img src="/Logo da loja.png" alt="Logotipo Sobreiro Vinos y Regalos">
+            <h1>Sobreiro</h1>
+        </a>
+        <nav>
+            <a href="/">Coleção</a>
+            <a href="/carrinho" class="nav-carrinho">Reserva (<%= typeof quantidadeCarrinho !== 'undefined' ? quantidadeCarrinho : 0 %>)</a>
+        </nav>
+    </header>

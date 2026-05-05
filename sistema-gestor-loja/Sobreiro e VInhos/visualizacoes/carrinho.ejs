@@ -1,0 +1,54 @@
+<%- include('cabecalho') %>
+
+<main>
+    <div class="secao-titulo" style="margin-top: 3rem;">
+        <h2>Sua Reserva</h2>
+        <p>Revise os itens selecionados</p>
+    </div>
+
+    <% if (carrinho && carrinho.length > 0) { %>
+        <div class="container-reserva" style="margin-top: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Preço Un.</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% carrinho.forEach(item => { %>
+                        <tr>
+                            <td style="font-weight: 500;"><%= item.nome %></td>
+                            <td><%= item.quantidade %></td>
+                            <td>R$ <%= item.preco.toFixed(2).replace('.', ',') %></td>
+                            <td>R$ <%= (item.preco * item.quantidade).toFixed(2).replace('.', ',') %></td>
+                            <td>
+                                <form action="/carrinho/remover" method="POST" style="margin:0; text-align: right;">
+                                    <input type="hidden" name="codigo" value="<%= item.codigo %>">
+                                    <button type="submit" style="background:none; border:none; color:#888; cursor:pointer; text-decoration:underline; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase;">Remover</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+
+            <div class="acoes-carrinho">
+                <a href="/" class="botao" style="width: auto;">Continuar Seleção</a>
+                <div class="total-carrinho">Total: R$ <%= valorTotal.toFixed(2).replace('.', ',') %></div>
+                <a href="/cadastro" class="botao botao-solido" style="width: auto;">Finalizar Reserva</a>
+            </div>
+        </div>
+
+    <% } else { %>
+        <div class="container-reserva" style="text-align: center; padding: 5rem 2rem; margin-top: 0;">
+            <h3 style="color: #666; margin-bottom: 2rem; font-family: var(--fonte-texto); font-weight: 300;">Sua lista de reserva está vazia.</h3>
+            <a href="/" class="botao botao-solido" style="width: auto;">Ver Produtos</a>
+        </div>
+    <% } %>
+</main>
+
+<%- include('rodape') %>

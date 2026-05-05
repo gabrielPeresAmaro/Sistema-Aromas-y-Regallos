@@ -1,0 +1,44 @@
+<%- include('cabecalho') %>
+
+<section class="hero">
+    <h2>Tradição & Elegância</h2>
+    <p>Descubra nossa seleção exclusiva de vinhos, espumantes e presentes que transformarão seus momentos em memórias inesquecíveis.</p>
+</section>
+
+<main>
+    <div class="secao-titulo">
+        <h2>Coleção Assinatura</h2>
+        <p>A arte de presentear com requinte</p>
+    </div>
+
+    <div class="grade-produtos">
+        <% if (produtos && produtos.length > 0) { %>
+            <% produtos.forEach(produto => { %>
+                <div class="cartao-produto">
+                    <div class="imagem-produto">
+                        <% if (produto.foto && produto.foto.startsWith('http')) { %>
+                            <img src="<%= produto.foto %>" alt="<%= produto.nome %>">
+                        <% } else { %>
+                            <img src="<%= produto.foto || '/fotos/IMG_4028.JPG' %>" alt="<%= produto.nome %>">
+                        <% } %>
+                    </div>
+                    <div class="conteudo-produto">
+                        <h3><%= produto.nome %></h3>
+                        <p><%= produto.descricao %></p>
+                        <div class="preco">R$ <%= typeof produto.preco === 'number' ? produto.preco.toFixed(2).replace('.', ',') : produto.preco %></div>
+                        <form action="/carrinho/adicionar" method="POST">
+                            <input type="hidden" name="codigo" value="<%= produto.codigo %>">
+                            <input type="hidden" name="nome" value="<%= produto.nome %>">
+                            <input type="hidden" name="preco" value="<%= produto.preco %>">
+                            <button type="submit" class="botao">Reservar</button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p style="text-align: center; width: 100%; color: #888;">No momento, não temos produtos disponíveis nesta categoria.</p>
+        <% } %>
+    </div>
+</main>
+
+<%- include('rodape') %>

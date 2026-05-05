@@ -1,0 +1,44 @@
+<%- include('cabecalho') %>
+
+<main>
+    <div class="secao-titulo" style="margin-top: 3rem;">
+        <h2>Dados da Reserva</h2>
+        <p>Preencha com seus dados para concluir a solicitação</p>
+    </div>
+
+    <div class="container-reserva" style="max-width: 800px; margin: 0 auto;">
+        <form action="/cadastro/finalizar" method="POST" class="formulario-grade">
+            <div class="grupo-formulario largo">
+                <label for="nome">Nome Completo</label>
+                <input type="text" id="nome" name="nome" required placeholder="Ex: João da Silva">
+            </div>
+            
+            <div class="grupo-formulario">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00">
+            </div>
+            
+            <div class="grupo-formulario">
+                <label for="telefone">Telefone / WhatsApp</label>
+                <input type="tel" id="telefone" name="telefone" required placeholder="(53) 90000-0000">
+            </div>
+            
+            <div class="grupo-formulario largo">
+                <label for="endereco">Endereço de Entrega ou Retirada</label>
+                <textarea id="endereco" name="endereco" rows="3" required placeholder="Preencha o endereço completo"></textarea>
+            </div>
+            
+            <div class="grupo-formulario largo">
+                <label for="dataReserva">Data e Hora Sugerida</label>
+                <input type="datetime-local" id="dataReserva" name="dataReserva" required>
+            </div>
+
+            <div class="grupo-formulario largo" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; gap: 2rem;">
+                <a href="/carrinho" class="botao" style="width: auto;">Voltar ao Carrinho</a>
+                <button type="submit" class="botao botao-solido" style="width: auto;">Confirmar Pedido</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<%- include('rodape') %>
