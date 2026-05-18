@@ -11,7 +11,8 @@ router.post('/adicionar', (req, res) => {
         imagem: req.body.imagem
     };
     cestaLogica.push(item);
-    res.redirect('/categoria/bebidas?sucesso=1');
+    const paginaOrigem = req.body.origem || '/catalogo';
+    res.redirect(`${paginaOrigem}?sucesso=1`);
 });
 
 router.post('/remover', (req, res) => {
@@ -52,12 +53,75 @@ router.get('/resumo', (req, res) => {
                 </div>
                 <div style="margin-top: 30px;">
                     <a href="/catalogo" class="btn-item" style="text-decoration: none; display: block; margin-bottom: 10px;">Continuar Comprando</a>
-                    <button class="btn-item" style="width: 100%; cursor: pointer;">Finalizar</button>
+                    <a href="/dados-cliente" class="btn-item" style="width: 100%; cursor: pointer;">Finalizar</a>
                 </div>
             </div>
         </body>
         </html>
     `);
 });
+
+router.get('/dados-cliente', (req, res) => {
+    const valorTotal = req.query.total
+    const html = `
+    <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body>
+            <form action="/tela-confirmacao" method="POST">
+
+            <label for="nome">Nome completo:</label><br>
+            <input type="text" id="nome" name="nome" maxlength="100"><br><br>
+
+            <label for="cpf">CPF:</label><br>
+            <input type="text" id="cpf" name="cpf" min="11"><br><br>
+
+            <label for="cep">Cep:</label><br>
+            <input type="number" id="cep" name="cep" maxlength="8"><br><br>
+
+            <label for="bairro">Bairo:</label><br>
+            <input type="text" id="bairro" name="bairro" min="0"><br><br>
+
+            <label for="rua">Rua:</label><br>
+            <input type="text" id="rua" name="rua" min="0"><br><br>
+
+            <button type="submit">Registrar reserva</button>
+            </form>
+        </body>
+        </html>
+        `
+    res.send(html)
+})
+
+router.post('/tela-confirmacao', (req, res) => {
+    const nome = req.body.nome
+    const cpf = req.body.cpf
+    const cep = parseInt(req.body.cep)
+    const bairro = req.body.bairro
+    const rua = req.body.rua
+    const total = parseFloat(req.body.total)
+    const html =
+        `<!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body>
+            <h1>Pedido Confirmado com sucesso!</h1>
+            <p>Nome: ${nome}</p>
+            <p>CPF: ${cpf}</p>
+            <p>CEP: ${cep}</p>
+            <p>Bairro: ${bairro}</p>
+            <p>Rua: ${rua}</p>
+            <p>Valor Total: R$ ${total.toFixed(2)}</p>
+            <a href="/catalogo">Voltar</a>
+        </body>
+        </html>
+        `
+
+    res.send(html)
+})
 
 module.exports = router;
