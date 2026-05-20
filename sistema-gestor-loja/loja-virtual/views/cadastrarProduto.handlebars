@@ -1,0 +1,32 @@
+
+  <h1>Cadastro de Produto</h1>
+
+  <form action="/produtos/cadastrar" method="POST">
+    <label for="nome">Nome do produto:</label><br>
+    <input type="text" id="nome" name="nome" maxlength="100"><br><br>
+
+    <label for="descricao">Descrição (até 280 caracteres):</label><br>
+    <textarea id="descricao" name="descricao" maxlength="280" cols="40" rows="5"></textarea><br><br>
+
+    <label for="quantidade_estoque">Quantidade em estoque:</label><br>
+    <input type="number" id="quantidade_estoque" name="quantidade_estoque" min="0"><br><br>
+
+    <label for="preco">Preço individual:</label><br>
+    <input type="number" id="preco" name="preco" step="0.01" min="0"><br><br>
+
+    <label for="categoria">Categoria:</label><br>
+    <select id="categoria" name="categoria">
+      <option value="">Selecione</option>
+      <option value="Cesta">Cesta</option>
+      <option value="Item comestível">Item comestível</option>
+      <option value="Bebida">Bebida</option>
+      <option value="Presente temático">Presente temático</option>
+      <option value="Cartão de mensagem">Cartão de mensagem</option>
+      <option value="Decoração">Decoração</option>
+    </select><br><br>
+
+    <label for="foto">Foto do produto:</label><br>
+    <input type="text" id="foto" name="foto">(PNG/JPG - 80px x 80px)<br><br>
+
+    <button type="submit">Cadastrar Produto</button>
+  </form>

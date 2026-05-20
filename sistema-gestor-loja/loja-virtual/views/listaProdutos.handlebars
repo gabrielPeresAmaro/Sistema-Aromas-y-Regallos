@@ -1,0 +1,25 @@
+<h1>Lista de Produtos</h1>
+
+<table border="1">
+  <tr>
+    <td><b>Código</b></td>
+    <td><b>Nome</b></td>
+    <td><b>Categoria</b></td>
+    <td><b>Preço</b></td>
+    <td colspan="3"><b>Operações</b></td>
+  </tr>
+
+  {{#each produtosBD}}
+  <tr>
+    <td>{{codigo}}</td>
+    <td>{{nome}}</td>
+    <td>{{categoria}}</td>
+    <td>{{preco}}</td>
+    <td><a href="/produtos/{{codigo}}">Consultar</a></td>
+    <td><a href="/produtos/editar/{{codigo}}">Editar</a></td>
+    <td><a href="/produtos/excluir/{{codigo}}">Excluir</a></td>
+
+  </tr>
+  {{/each}}
+
+</table>

@@ -1,0 +1,71 @@
+
+  <h1>Consulta de Pedido</h1>
+
+  <form action="#" method="POST">
+
+    <label for="codigo">Código do pedido:</label><br>
+    <input type="text" id="codigo" name="codigo" value="{{pedidoPlano.codigo}}" readonly size="2"><br><br>
+
+    <label for="data_criacao">Data de cadastro:</label><br>
+    <input type="text" id="data_criacao" name="data_criacao" value="{{pedidoPlano.data_criacao}}" readonly maxlength="10" size="10"><br><br>
+
+    <label for="preco_total">Preço total:</label><br>
+    <input type="text" id="preco_total" name="preco_total" value="{{pedidoPlano.preco_total}}" readonly maxlength="100" size="50"><br><br>
+
+    <fieldset>
+      <legend>Dados do cliente:</legend>
+
+          <label for="cliente_nome">Nome:</label><br>
+          <input type="text" id="cliente_nome" name="cliente_nome" value="{{pedidoPlano.cliente_nome}}" readonly maxlength="100" size="50"><br><br>
+
+          <label for="cliente_cpf_cnpj">CPF/CNPJ:</label><br>
+          <input type="text" id="cliente_cpf_cnpj" name="cliente_cpf_cnpj" value="{{pedidoPlano.cliente_cpf_cnpj}}" readonly maxlength="25" size="25"><br><br>
+
+          <label for="cliente_telefone">Enderereço:</label><br>
+          <input type="text" id="cliente_telefone" name="cliente_telefone" value="{{pedidoPlano.cliente_telefone}}" readonly maxlength="15" size="15"><br><br>
+    </fieldset>          
+
+  <br />
+
+    <fieldset>
+      <legend>Dados para entrega:</legend>
+          
+          <label for="entrega_destinatario_nome">Nome do destinarário:</label><br>
+          <input type="text" id="entrega_destinatario_nome" name="entrega_destinatario_nome" value="{{pedidoPlano.entrega_destinatario_nome}}" readonly maxlength="100" size="50"><br><br>
+
+          <label for="entrega_destinatario_endereco">Endereço:</label><br>
+          <input type="text" id="entrega_destinatario_endereco" name="entrega_destinatario_endereco" value="{{pedidoPlano.entrega_destinatario_endereco}}" readonly maxlength="100" size="50"><br><br>
+
+          <label for="entrega_data_horario">Data e horário:</label><br>
+          <input type="text" id="entrega_data_horario" name="entrega_data_horario" value="{{pedidoPlano.entrega_data_horario}}" readonly maxlength="100" size="50"><br><br>
+    </fieldset>      
+
+    <br />
+
+    <h3>Lista de Produtos</h3>
+
+      <table border="1">
+        <tr>
+          <td><b>Código</b></td>
+          <td><b>Nome</b></td>
+        </tr>
+
+        {{#each listaProdutosCestaBDPlanos}}
+        <tr>
+          <td>{{codigo}}</td>
+          <td>
+              {{#contains nome "cesta"}}
+                <font color='blue'>{{nome}}</font>
+              {{else}}
+                {{nome}}
+              {{/contains}}
+          </td>      
+        </tr>
+        {{/each}}
+
+      </table>
+
+      <br />
+
+
+  </form>

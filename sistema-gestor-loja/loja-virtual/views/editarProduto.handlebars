@@ -1,0 +1,36 @@
+
+  <h1>Editar Dados do Produto</h1>
+
+  <form action="/produtos/salvar-edicao" method="POST">
+
+    <label for="nome">Id do produto:</label><br>
+    <input type="text" id="codigo" name="codigo" value="{{produtoPlano.codigo}}" readonly size="3"><br><br>
+
+    <label for="nome">Nome do produto:</label><br>
+    <input type="text" id="nome" name="nome" value="{{produtoPlano.nome}}" maxlength="100" size="50"><br><br>
+
+    <label for="descricao">Descrição (até 280 caracteres):</label><br>
+    <textarea id="descricao" name="descricao" maxlength="280" cols="40" rows="5">{{produtoPlano.descricao}}</textarea><br><br>
+
+    <label for="quantidade_estoque">Quantidade em estoque:</label><br>
+    <input type="number" id="quantidade_estoque" name="quantidade_estoque" value="{{produtoPlano.quantidade_estoque}}" min="0"><br><br>
+
+    <label for="preco">Preço individual:</label><br>
+    <input type="number" id="preco" name="preco" value="{{produtoPlano.preco}}" step="0.01" min="0"><br><br>
+
+    <label for="categoria">Categoria:</label><br>
+    <select id="categoria" name="categoria">
+      <option {{#if (eq produtoPlano.categoria "Cesta")}}selected{{/if}} value="Cesta">Cesta</option>
+      <option {{#if (eq produtoPlano.categoria "Item comestível")}}selected{{/if}} value="Item comestível">Item comestível</option>
+      <option {{#if (eq produtoPlano.categoria "Bebida")}}selected{{/if}} value="Bebida">Bebida</option>
+      <option {{#if (eq produtoPlano.categoria "Presente temático")}}selected{{/if}} value="Presente temático">Presente temático</option>
+      <option {{#if (eq produtoPlano.categoria "Cartão de mensagem")}}selected{{/if}} value="Cartão de mensagem">Cartão de mensagem</option>
+      <option {{#if (eq produtoPlano.categoria "Decoração")}}selected{{/if}} value="Decoração">Decoração</option>
+    </select><br><br>
+
+    <label for="foto">Foto do produto:</label><br>
+    <input type="text" id="foto" name="foto" value="{{produtoPlano.foto}}">(PNG/JPG - 80px x 80px)<br><br>
+
+    <button type="submit">Salvar Alteração</button>
+    
+  </form>

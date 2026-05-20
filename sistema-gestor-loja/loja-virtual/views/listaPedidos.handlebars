@@ -1,0 +1,23 @@
+
+  <h1>Lista de Pedidos</h1>
+
+  <table border="1">
+    <tr>
+      <td><b>Código</b></td>
+      <td><b>Data do Pedido</b></td>
+      <td><b>Cliente / CPF/CNPJ</b></td>
+      <td><b>Total a pagar</b></td>
+      <td><b>Operações</b></td>
+    </tr>
+
+    {{#each pedidosBD}}
+    <tr>
+      <td>{{codigo}}</td>
+      <td>{{data_criacao}}</td>
+      <td>{{cliente_nome}} / {{cliente_cpf_cnpj}}</td>
+      <td>{{preco_total}}</td>
+      <td><a href="/pedidos/{{codigo}}">Consultar</a></td>
+    </tr>
+    {{/each}}
+
+  </table>
