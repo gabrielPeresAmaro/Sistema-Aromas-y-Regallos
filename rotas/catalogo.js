@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-var cestaLogica = [];
-
 
 router.get('/catalogo', (req, res) => {
     res.send(`
@@ -25,11 +23,11 @@ router.get('/catalogo', (req, res) => {
     `);
 });
 
-router.get('/categoria/bebidas', async function (req, res) {
+async function Categoria(res, titulo, apiCategoria, origem) {
     try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/bebida');
+        let api = await fetch(`http://localhost:3001/produtos/categoria/${apiCategoria}`);
         let txt = await api.text();
-        let obj = await JSON.parse(txt);
+        let obj = JSON.parse(txt);
         let produtosHtml = '';
         for (let i = 0; i < obj.length; i++) {
             const produto = obj[i];
@@ -45,7 +43,7 @@ router.get('/categoria/bebidas', async function (req, res) {
                         <input type="hidden" name="nome" value="${produto.nome}">
                         <input type="hidden" name="preco" value="${produto.preco}">
                         <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/bebidas">
+                        <input type="hidden" name="origem" value="${origem}">
                         <button type="submit" class="btn-add">Reservar</button>
                     </form>
                 </div>
@@ -57,7 +55,7 @@ router.get('/categoria/bebidas', async function (req, res) {
             <head><link rel="stylesheet" href="/style.css"></head>
             <body>
                 <header class="header-preto">
-                    <h1>Bebidas</h1>
+                    <h1>${titulo}</h1>
                     <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
                 </header>
                 <section class="vitrine">
@@ -79,286 +77,14 @@ router.get('/categoria/bebidas', async function (req, res) {
         console.error("Erro ao consumir a API:", erro);
         res.status(500).send("Erro interno ao buscar os produtos da API.");
     }
-});
-router.get('/categoria/decoracao', async function (req, res) {
-    try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/decoracao_cesta');
-        let txt = await api.text();
-        let obj = await JSON.parse(txt);
-        let produtosHtml = '';
-        for (let i = 0; i < obj.length; i++) {
-            const produto = obj[i];
-            let precoFormatado = parseFloat(produto.preco).toFixed(2);
-            let imagemProduto = produto.foto;
+}
 
-            produtosHtml += `
-                <div class="card-produto">
-                    <img src="${imagemProduto}" width="100">
-                    <h3>${produto.nome}</h3>
-                    <p>R$ ${precoFormatado}</p>
-                    <form action="/adicionar" method="POST">
-                        <input type="hidden" name="nome" value="${produto.nome}">
-                        <input type="hidden" name="preco" value="${produto.preco}">
-                        <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/decoracao">
-                        <button type="submit" class="btn-add">Reservar</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        res.send(`
-            <html>
-            <head><link rel="stylesheet" href="/style.css"></head>
-            <body>
-                <header class="header-preto">
-                    <h1>Decoração</h1>
-                    <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
-                </header>
-                <section class="vitrine">
-                    ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
-                </section>
-                <a href="/catalogo" class="btn-voltar">Voltar</a>
-                <script>
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('sucesso')) {
-                        alert('Item adicionado à sua cesta!');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-        const item = {
-            id: Date.now(),
-            nome: req.body.nome,
-            preco: parseFloat(req.body.preco),
-            imagem: req.body.imagem
-        };
-        cestaLogica.push(item);
-        res.redirect('/categoria/decoracao?sucesso=1');
-    } catch (erro) {
-        console.error("Erro ao consumir a API:", erro);
-        res.status(500).send("Erro interno ao buscar os produtos da API.");
-    }
-});
-router.get('/categoria/itens-comestiveis', async function (req, res) {
-    try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/item_comestivel');
-        let txt = await api.text();
-        let obj = await JSON.parse(txt);
-        let produtosHtml = '';
-        for (let i = 0; i < obj.length; i++) {
-            const produto = obj[i];
-            let precoFormatado = parseFloat(produto.preco).toFixed(2);
-            let imagemProduto = produto.foto;
-
-            produtosHtml += `
-                <div class="card-produto">
-                    <img src="${imagemProduto}" width="100">
-                    <h3>${produto.nome}</h3>
-                    <p>R$ ${precoFormatado}</p>
-                    <form action="/adicionar" method="POST">
-                        <input type="hidden" name="nome" value="${produto.nome}">
-                        <input type="hidden" name="preco" value="${produto.preco}">
-                        <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/itens-comestiveis">
-                        <button type="submit" class="btn-add">Reservar</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        res.send(`
-            <html>
-            <head><link rel="stylesheet" href="/style.css"></head>
-            <body>
-                <header class="header-preto">
-                    <h1>Itens comestíveis</h1>
-                    <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
-                </header>
-                <section class="vitrine">
-                    ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
-                </section>
-                <a href="/catalogo" class="btn-voltar">Voltar</a>
-                <script>
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('sucesso')) {
-                        alert('Item adicionado à sua cesta!');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-    } catch (erro) {
-        console.error("Erro ao consumir a API:", erro);
-        res.status(500).send("Erro interno ao buscar os produtos da API.");
-    }
-});
-router.get('/categoria/cestas', async function (req, res) {
-    try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/cesta');
-        let txt = await api.text();
-        let obj = await JSON.parse(txt);
-        let produtosHtml = '';
-        for (let i = 0; i < obj.length; i++) {
-            const produto = obj[i];
-            let precoFormatado = parseFloat(produto.preco).toFixed(2);
-            let imagemProduto = produto.foto;
-
-            produtosHtml += `
-                <div class="card-produto">
-                    <img src="${imagemProduto}" width="100">
-                    <h3>${produto.nome}</h3>
-                    <p>R$ ${precoFormatado}</p>
-                    <form action="/adicionar" method="POST">
-                        <input type="hidden" name="nome" value="${produto.nome}">
-                        <input type="hidden" name="preco" value="${produto.preco}">
-                        <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/cestas">
-
-                        <button type="submit" class="btn-add">Reservar</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        res.send(`
-            <html>
-            <head><link rel="stylesheet" href="/style.css"></head>
-            <body>
-                <header class="header-preto">
-                    <h1>Itens comestíveis</h1>
-                    <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
-                </header>
-                <section class="vitrine">
-                    ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
-                </section>
-                <a href="/catalogo" class="btn-voltar">Voltar</a>
-                <script>
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('sucesso')) {
-                        alert('Item adicionado à sua cesta!');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-    } catch (erro) {
-        console.error("Erro ao consumir a API:", erro);
-        res.status(500).send("Erro interno ao buscar os produtos da API.");
-    }
-});
-router.get('/categoria/presentes', async function (req, res) {
-    try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/presente_tematico');
-        let txt = await api.text();
-        let obj = await JSON.parse(txt);
-        let produtosHtml = '';
-        for (let i = 0; i < obj.length; i++) {
-            const produto = obj[i];
-            let precoFormatado = parseFloat(produto.preco).toFixed(2);
-            let imagemProduto = produto.foto;
-
-            produtosHtml += `
-                <div class="card-produto">
-                    <img src="${imagemProduto}" width="100">
-                    <h3>${produto.nome}</h3>
-                    <p>R$ ${precoFormatado}</p>
-                    <form action="/adicionar" method="POST">
-                        <input type="hidden" name="nome" value="${produto.nome}">
-                        <input type="hidden" name="preco" value="${produto.preco}">
-                        <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/presentes">
-                        <button type="submit" class="btn-add">Reservar</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        res.send(`
-            <html>
-            <head><link rel="stylesheet" href="/style.css"></head>
-            <body>
-                <header class="header-preto">
-                    <h1>Presentes</h1>
-                    <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
-                </header>
-                <section class="vitrine">
-                    ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
-                </section>
-                <a href="/catalogo" class="btn-voltar">Voltar</a>
-                <script>
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('sucesso')) {
-                        alert('Item adicionado à sua cesta!');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-    } catch (erro) {
-        console.error("Erro ao consumir a API:", erro);
-        res.status(500).send("Erro interno ao buscar os produtos da API.");
-    }
-});
-router.get('/categoria/cartoes-mensagem', async function (req, res) {
-    try {
-        let api = await fetch('http://localhost:3001/produtos/categoria/cartao_de_mensagem');
-        let txt = await api.text();
-        let obj = await JSON.parse(txt);
-        let produtosHtml = '';
-        for (let i = 0; i < obj.length; i++) {
-            const produto = obj[i];
-            let precoFormatado = parseFloat(produto.preco).toFixed(2);
-            let imagemProduto = produto.foto;
-
-            produtosHtml += `
-                <div class="card-produto">
-                    <img src="${imagemProduto}" width="100">
-                    <h3>${produto.nome}</h3>
-                    <p>R$ ${precoFormatado}</p>
-                    <form action="/adicionar" method="POST">
-                        <input type="hidden" name="nome" value="${produto.nome}">
-                        <input type="hidden" name="preco" value="${produto.preco}">
-                        <input type="hidden" name="imagem" value="${imagemProduto}">
-                        <input type="hidden" name="origem" value="/categoria/cartoes-mensagem">
-                        <button type="submit" class="btn-add">Reservar</button>
-                    </form>
-                </div>
-            `;
-        }
-
-        res.send(`
-            <html>
-            <head><link rel="stylesheet" href="/style.css"></head>
-            <body>
-                <header class="header-preto">
-                    <h1>Cartões de Mensagens</h1>
-                    <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
-                </header>
-                <section class="vitrine">
-                    ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
-                </section>
-                <a href="/catalogo" class="btn-voltar">Voltar</a>
-                <script>
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.has('sucesso')) {
-                        alert('Item adicionado à sua cesta!');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                </script>
-            </body>
-            </html>
-        `);
-    } catch (erro) {
-        console.error("Erro ao consumir a API:", erro);
-        res.status(500).send("Erro interno ao buscar os produtos da API.");
-    }
-});
+router.get('/categoria/bebidas', (req, res) => Categoria(res, 'Bebidas', 'bebida', '/categoria/bebidas'));
+router.get('/categoria/decoracao', (req, res) => Categoria(res, 'Decoração', 'decoracao_cesta', '/categoria/decoracao'));
+router.get('/categoria/itens-comestiveis', (req, res) => Categoria(res, 'Itens comestíveis', 'item_comestivel', '/categoria/itens-comestiveis'));
+router.get('/categoria/cestas', (req, res) => Categoria(res, 'Cestas', 'cesta', '/categoria/cestas'));
+router.get('/categoria/presentes', (req, res) => Categoria(res, 'Presentes', 'presente_tematico', '/categoria/presentes'));
+router.get('/categoria/cartoes-mensagem', (req, res) => Categoria(res, 'Cartões de Mensagens', 'cartao_de_mensagem', '/categoria/cartoes-mensagem'));
 
 
 module.exports = router;

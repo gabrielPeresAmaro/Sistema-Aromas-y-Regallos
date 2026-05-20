@@ -1,30 +1,34 @@
 const express = require('express');
 const router = express.Router();
 
-var cestaLogica = [];
 
 router.post('/adicionar', (req, res) => {
+    if (!req.session.cesta) {
+        req.session.cesta = [];
+    }
     const item = {
         id: Date.now(),
         nome: req.body.nome,
         preco: parseFloat(req.body.preco),
         imagem: req.body.imagem
     };
-    cestaLogica.push(item);
+    req.session.cesta.push(item);
     const paginaOrigem = req.body.origem || '/catalogo';
     res.redirect(`${paginaOrigem}?sucesso=1`);
 });
 
 router.post('/remover', (req, res) => {
     const idParaRemover = req.body.id;
-    cestaLogica = cestaLogica.filter(item => item.id != idParaRemover);
+    let cesta = req.session.cesta || [];
+    req.session.cesta = cesta.filter(item => item.id != idParaRemover);
     res.redirect('/resumo');
 });
 
 router.get('/resumo', (req, res) => {
-    let total = cestaLogica.reduce((acc, item) => acc + item.preco, 0);
+    let cesta = req.session.cesta || [];
+    let total = cesta.reduce((acc, item) => acc + item.preco, 0);
 
-    let itensHtml = cestaLogica.map(i => `
+    let itensHtml = cesta.map(i => `
     <div class="item-reserva">
         <div class="item-info">
             <img src="${i.imagem}" class="item-foto">
@@ -91,7 +95,7 @@ router.get('/dados-cliente', (req, res) => {
             </form>
         </body>
         </html>
-        `
+        <br/><br/><a href="/resumo">Voltar</a>`
     res.send(html)
 })
 
@@ -116,12 +120,17 @@ router.post('/tela-confirmacao', (req, res) => {
             <p>Bairro: ${bairro}</p>
             <p>Rua: ${rua}</p>
             <p>Valor Total: R$ ${total.toFixed(2)}</p>
-            <a href="/catalogo">Voltar</a>
+            
         </body>
         </html>
         `
-
-    res.send(html)
+    erro = 'Erro - não pode haver campo de dado em branco.<br/><br/><a href="/dados-cliente">Voltar</a>'
+    if (nome == "" || cpf == "" || cep == "" || bairro == "" || rua == "") {
+        res.send(erro);
+    }
+    else {
+        res.send(html)
+    }
 })
 
 module.exports = router;
