@@ -10,8 +10,14 @@ router.post('/adicionar', (req, res) => {
         id: Date.now(),
         nome: req.body.nome,
         preco: parseFloat(req.body.preco),
+        volume: parseFloat(req.body.volume) || 0.00,
+        categoria: req.body.categoria,
         imagem: req.body.imagem
     };
+    if (item.categoria === 'Cesta') {
+        req.session.cesta = req.session.cesta.filter(i => i.categoria !== 'Cesta');
+    }
+
     req.session.cesta.push(item);
     const paginaOrigem = req.body.origem || '/catalogo';
     res.redirect(`${paginaOrigem}?sucesso=1`);
@@ -26,23 +32,41 @@ router.post('/remover', (req, res) => {
 
 router.get('/resumo', (req, res) => {
     let cesta = req.session.cesta || [];
-    let total = cesta.reduce((acc, item) => acc + item.preco, 0);
+    let dadosFrete = req.session.frete || { valor: 0, prazo: 0, cidade: '' };
+
+    // 1. Procuramos se o usuário já escolheu alguma cesta
+    const cestaEscolhida = cesta.find(item => item.categoria === 'Cesta');
+
+    // 2. Se achou a cesta, o limite máximo é o volume dela. Se não achou, o limite é 0.
+    let capacidadeMaxCesta = cestaEscolhida ? cestaEscolhida.volume : 0.00;
+
+    // 3. CORREÇÃO DA SOMA: Filtramos para somar o volume APENAS dos itens que vão dentro dela
+    let volumeItensOcupado = cesta
+        .filter(item => item.categoria !== 'Cesta')
+        .reduce((acc, item) => acc + item.volume, 0);
+
+    // Subtotal de preços e cálculo de frete continuam iguais
+    let subtotal = cesta.reduce((acc, item) => acc + item.preco, 0);
+    let totalComFrete = subtotal + dadosFrete.valor;
 
     let itensHtml = cesta.map(i => `
-    <div class="item-reserva">
-        <div class="item-info">
-            <img src="${i.imagem}" class="item-foto">
-            <div>
-                <p class="texto-negrito">${i.nome}</p>
-                <p class="texto-cinza">R$ ${i.preco.toFixed(2)}</p>
+        <div class="item-reserva">
+            <div class="item-info">
+                <img src="${i.imagem}" class="item-foto">
+                <div>
+                    <p class="texto-negrito">${i.nome}</p>
+                    <p class="texto-cinza">R$ ${i.preco.toFixed(2)}</p>
+                    <p class="texto-cinza">
+                        ${i.categoria === 'Cesta' ? `Capacidade: ${i.volume.toFixed(2)}L` : `Ocupa: ${i.volume.toFixed(2)}L`}
+                    </p>
+                </div>
             </div>
+            <form action="/remover" method="POST">
+                <input type="hidden" name="id" value="${i.id}">
+                <button type="submit" class="btn-remover">Remover</button>
+            </form>
         </div>
-        <form action="/remover" method="POST">
-            <input type="hidden" name="id" value="${i.id}">
-            <button type="submit" class="btn-remover">Remover</button>
-        </form>
-    </div>
-`).join('');
+    `).join('');
 
     res.send(`
         <html>
@@ -50,87 +74,198 @@ router.get('/resumo', (req, res) => {
         <body>
             <header class="header-preto"><h1>Minha Cesta</h1></header>
             <div class="conteudo-resumo" style="max-width: 600px; margin: 20px auto; padding: 20px;">
-                ${itensHtml || '<p style="text-align: center;">Sua cesta está vazia.</p>'}
+                ${itensHtml || '<p style="text-align: center; color: black;">Sua cesta está vazia.</p>'}
                 <hr>
-                <div class="total-reserva" style="text-align: right;">
-                    <h3>Total: R$ ${total.toFixed(2)}</h3>
+                
+                <div class="secao-frete">
+                    <h4>Calcular Frete (Correios)</h4>
+                    <form action="/calcular-frete" method="POST" class="form-frete">
+                        <input type="text" name="cep" placeholder="Digite seu CEP" value="${dadosFrete.cepCalculado || ''}" maxlength="9" required class="input-frete">
+                        <button type="submit" class="btn-add">Calcular</button>
+                    </form>
+                    
+                    ${dadosFrete.valor > 0 ? `
+                        <div class="resultado-frete">
+                            <p><strong>Entrega para:</strong> ${dadosFrete.rua}, ${dadosFrete.bairro} - ${dadosFrete.cidade}</p>
+                            <p><strong>Valor do Frete:</strong> R$ ${dadosFrete.valor.toFixed(2)}</p>
+                            <p><strong>Prazo estimado:</strong> ${dadosFrete.prazo} dias úteis</p>
+                        </div>
+                    ` : ''}
                 </div>
+
+                <hr>
+                <div class="total-reserva">
+                    <p class="texto-subtotal">Subtotal: R$ ${subtotal.toFixed(2)}</p>
+                    ${dadosFrete.valor > 0 ? `<p class="texto-frete-sucesso">Frete: R$ ${dadosFrete.valor.toFixed(2)}</p>` : ''}
+                    <h3>Total Geral: R$ ${totalComFrete.toFixed(2)}</h3>
+                    
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+                    ${cestaEscolhida ? `
+                        <p style="color: black; font-size: 0.95rem;">
+                            📦 Modelo da Cesta: <strong>${cestaEscolhida.nome}</strong>
+                        </p>
+                        <h4 style="color: black; margin-top: 5px;">
+                            Ocupação do espaço: <span style="color: ${volumeItensOcupado > capacidadeMaxCesta ? 'red' : 'green'}">
+                                ${volumeItensOcupado.toFixed(2)}L
+                            </span> de ${capacidadeMaxCesta.toFixed(2)}L utilizados
+                        </h4>
+                    ` : `
+                        <h4 style="color: #ffcc00; margin-top: 5px;">⚠️ Nenhuma cesta adicionada ao pedido ainda.</h4>
+                    `}
+                </div>
+                
                 <div style="margin-top: 30px;">
-                    <a href="/catalogo" class="btn-item" style="text-decoration: none; display: block; margin-bottom: 10px;">Continuar Comprando</a>
-                    <a href="/dados-cliente" class="btn-item" style="width: 100%; cursor: pointer;">Finalizar</a>
+                    <a href="/catalogo" class="btn-item" style="text-decoration: none; display: block; margin-bottom: 10px; text-align: center;">Continuar Comprando</a>
+                    ${cestaEscolhida ? `
+                        <a href="/dados-cliente?total=${totalComFrete}" class="btn-item" style="text-decoration: none; display: block; text-align: center;">Finalizar Pedido</a>
+                    ` : `
+                        <button class="btn-item" disabled style="background: gray; cursor: not-allowed; width: 100%;">Escolha uma Cesta para Finalizar</button>
+                    `}
                 </div>
             </div>
+            
+            <script>
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('erro_cep')) {
+                    alert('Ops! Verifique o CEP digitado e tente novamente.');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            </script>
         </body>
         </html>
     `);
 });
-
 router.get('/dados-cliente', (req, res) => {
-    const valorTotal = req.query.total
+    // 1. Buscamos o frete que já foi calculado na tela anterior (se não houver, assume vazio)
+    let dadosFrete = req.session.frete || { valor: 0, cepCalculado: '', cidade: '' };
+
+    // 2. Se o usuário pulou a tela de resumo sem calcular o frete, mandamos ele de volta
+    let cesta = req.session.cesta || [];
+    if (cesta.length === 0) {
+        return res.redirect('/resumo');
+    }
+
+    let subtotal = cesta.reduce((acc, item) => acc + item.preco, 0);
+    let totalGeral = subtotal + dadosFrete.valor;
+
     const html = `
     <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-        </head>
-        <body>
-            <form action="/tela-confirmacao" method="POST">
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/style.css">
+        <title>Dados de Entrega</title>
+    </head>
+    <body style="color: black; padding: 20px; max-width: 500px; margin: 0 auto;">
+        <h2>Dados para Entrega</h2>
+        
+        <form action="/tela-confirmacao" method="POST">
+            <input type="hidden" name="total" value="${totalGeral}">
 
             <label for="nome">Nome completo:</label><br>
-            <input type="text" id="nome" name="nome" maxlength="100"><br><br>
+            <input type="text" id="nome" name="nome" maxlength="100" required><br><br>
 
             <label for="cpf">CPF:</label><br>
-            <input type="text" id="cpf" name="cpf" min="11"><br><br>
+            <input type="text" id="cpf" name="cpf" required><br><br>
 
-            <label for="cep">Cep:</label><br>
-            <input type="number" id="cep" name="cep" maxlength="8"><br><br>
+            <label for="cep">CEP:</label><br>
+            <input type="text" id="cep" name="cep" value="${dadosFrete.cepCalculado}" required readonly style="background: #eee;"><br>
+            <small style="color: green;">Endereço identificado: ${dadosFrete.rua}, ${dadosFrete.bairro} - ${dadosFrete.cidade || 'Não informada'}</small><br><br>
 
-            <label for="bairro">Bairo:</label><br>
-            <input type="text" id="bairro" name="bairro" min="0"><br><br>
+            <label for="bairro">Bairro:</label><br>
+            <input type="text" id="bairro" name="bairro" required><br><br>
 
             <label for="rua">Rua:</label><br>
-            <input type="text" id="rua" name="rua" min="0"><br><br>
+            <input type="text" id="rua" name="rua" required><br><br>
 
-            <button type="submit">Registrar reserva</button>
-            </form>
-        </body>
-        </html>
-        <br/><br/><a href="/resumo">Voltar</a>`
-    res.send(html)
-})
+            <button type="submit" class="btn-item" style="width: 100%;">Confirmar e Registrar Reserva</button>
+        </form>
+        
+        <br/><a href="/resumo" class="btn-voltar">Voltar ao Carrinho</a>
+    </body>
+    </html>`;
 
+    res.send(html);
+});
+router.post('/calcular-frete', async (req, res) => {
+    const cepDestino = req.body.cep.replace(/\D/g, '');
+
+    if (cepDestino.length !== 8) {
+        return res.redirect('/resumo?erro_cep=1');
+    }
+
+    try {
+        const url = `https://cep.awesomeapi.com.br/json/${cepDestino}`;
+        const respostaCep = await fetch(url);
+
+        if (!respostaCep.ok) {
+            throw new Error("CEP não encontrado");
+        }
+
+        const dadosCep = await respostaCep.json();
+
+        let valorFrete = 15.90; // Exemplo RS
+        let prazoEntrega = 3;
+
+        if (dadosCep.state !== 'RS') {
+            valorFrete = 34.90; // Fora do RS
+            prazoEntrega = 7;
+        }
+
+        req.session.frete = {
+            valor: valorFrete,
+            prazo: prazoEntrega,
+            cepCalculado: cepDestino,
+            cidade: dadosCep.city,
+            bairro: dadosCep.district,
+            rua: dadosCep.address
+        };
+
+        res.redirect('/resumo');
+
+    } catch (erro) {
+        console.error("Erro ao calcular frete:", erro);
+        res.redirect('/resumo?erro_cep=2');
+    }
+});
+
+// 6. ROTA: Finalizar Pedido e Mostrar Sucesso (Antigo conflito resolvido)
 router.post('/tela-confirmacao', (req, res) => {
-    const nome = req.body.nome
-    const cpf = req.body.cpf
-    const cep = parseInt(req.body.cep)
-    const bairro = req.body.bairro
-    const rua = req.body.rua
-    const total = parseFloat(req.body.total)
-    const html =
-        `<!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-        </head>
-        <body>
-            <h1>Pedido Confirmado com sucesso!</h1>
-            <p>Nome: ${nome}</p>
-            <p>CPF: ${cpf}</p>
-            <p>CEP: ${cep}</p>
-            <p>Bairro: ${bairro}</p>
-            <p>Rua: ${rua}</p>
-            <p>Valor Total: R$ ${total.toFixed(2)}</p>
-            
-        </body>
-        </html>
-        `
-    erro = 'Erro - não pode haver campo de dado em branco.<br/><br/><a href="/dados-cliente">Voltar</a>'
-    if (nome == "" || cpf == "" || cep == "" || bairro == "" || rua == "") {
-        res.send(erro);
+    const { nome, cpf, cep, bairro, rua, total } = req.body;
+    const totalFormatado = parseFloat(total) || 0;
+
+    if (!nome || !cpf || !cep || !bairro || !rua) {
+        return res.send('Erro - não pode haver campo de dado em branco.<br/><br/><a href="/dados-cliente">Voltar</a>');
     }
-    else {
-        res.send(html)
-    }
-})
+
+    // Aqui futuramente você vai rodar o seu INSERT do banco de dados (pool.query)
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/style.css">
+    </head>
+    <body style="color: black; padding: 20px; text-align: center;">
+        <h1 style="color: green;">Pedido Confirmado com sucesso!</h1>
+        <div style="text-align: left; max-width: 400px; margin: 20px auto; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+            <p><strong>Nome:</strong> ${nome}</p>
+            <p><strong>CPF:</strong> ${cpf}</p>
+            <p><strong>CEP:</strong> ${cep}</p>
+            <p><strong>Bairro:</strong> ${bairro}</p>
+            <p><strong>Rua:</strong> ${rua}</p>
+            <h3>Valor Pago Total: R$ ${totalFormatado.toFixed(2)}</h3>
+        </div>
+        <br/><a href="/catalogo" class="btn-item" style="text-decoration:none; display:inline-block;">Voltar ao Catálogo</a>
+    </body>
+    </html>`;
+
+    // Limpa o carrinho e o frete da sessão após a compra finalizada com sucesso
+    req.session.cesta = [];
+    req.session.frete = null;
+
+    res.send(html);
+});
 
 module.exports = router;

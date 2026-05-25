@@ -188,3 +188,213 @@ header h1 {
 .btn-remover:hover {
     background: #cc0000;
 }
+
+/* ==========================================================================
+   FOLHA DE ESTILO: CARRINHO E COMPRA (Aromas y Regalos)
+   ========================================================================== */
+
+/* Container principal das telas de resumo e dados */
+.conteudo-resumo {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+/* Container menor usado na tela de dados do cliente */
+.conteudo-dados {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    border: 1px solid #000;
+}
+
+/* Estrutura de cada linha de produto no resumo */
+.item-reserva {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item-info {
+    display: flex;
+    gap: 10px;
+}
+
+.item-foto {
+    width: 50px;
+    height: auto;
+}
+
+/* Textos da listagem */
+.texto-negrito {
+    color: #000000;
+    margin: 0;
+    font-weight: bold;
+}
+
+.texto-cinza {
+    color: #808080;
+    margin: 0;
+}
+
+/* Botão de exclusão/remoção */
+.btn-remover {
+    background-color: #d9534f;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.btn-remover:hover {
+    background-color: #c9302c;
+}
+
+/* Bloco de cálculo do frete */
+.secao-frete {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+    color: #000000;
+}
+
+.form-frete {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.input-frete {
+    padding: 8px;
+    flex: 1;
+}
+
+.resultado-frete {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+/* Bloco de exibição de valores finais */
+.total-reserva {
+    text-align: right;
+    color: #000000;
+}
+
+.texto-subtotal {
+    margin: 5px 0;
+}
+
+.texto-frete-sucesso {
+    margin: 5px 0;
+    color: #008000;
+    /* Verde */
+}
+
+/* Alinhamentos gerais e botões em bloco */
+.bloco-botoes {
+    margin-top: 30px;
+}
+
+.btn-bloco {
+    text-decoration: none;
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+.btn-excluir-vitrine {
+    background-color: #d9534f;
+    color: #ffffff;
+    border: none;
+    width: 100%;
+    padding: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+/* Layout da confirmação de sucesso */
+.tela-sucesso {
+    color: #000000;
+    padding: 20px;
+    text-align: center;
+}
+
+.titulo-sucesso {
+    color: #008000;
+}
+
+.recibo-pedido {
+    text-align: left;
+    max-width: 400px;
+    margin: 20px auto;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.recibo-linha-divisoria {
+    margin: 15px 0;
+    border: 0;
+    border-top: 1px solid #ddd;
+}
+
+/* ==========================================================================
+   ELEMENTOS DO CATÁLOGO DINÂMICO (Volume e Cestas)
+   ========================================================================== */
+
+/* Barra superior que monitora a capacidade da cesta */
+.barra-status-volume {
+    background-color: #e0e0e0;
+    padding: 10px;
+    text-align: center;
+    color: #000000;
+    font-weight: bold;
+}
+
+/* Estado de Alerta: Quando nenhuma cesta foi escolhida ainda */
+.barra-status-volume.aviso {
+    background-color: #ffcc00;
+}
+
+/* Estado Crítico: Quando a cesta está completamente cheia */
+.barra-status-volume.cheia {
+    background-color: #ffcccc;
+}
+
+/* Informações técnicas de volume abaixo do título do produto */
+.texto-volume-produto {
+    font-size: 0.85rem;
+    margin: 5px 0;
+    color: #808080;
+    /* Cor cinza padrão */
+}
+
+/* Espaçamento superior para alinhar o botão de exclusão do gestor */
+.form-excluir-vitrine {
+    margin-top: 5px;
+}
+
+/* Botão de exclusão da vitrine (Estilo limpo baseado no seu padrão) */
+.btn-excluir-vitrine {
+    background-color: #d9534f;
+    color: #ffffff;
+    border: none;
+    width: 100%;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.btn-excluir-vitrine:hover {
+    background-color: #c9302c;
+}
+
+/* Estado desabilitado do botão Reservar quando falta espaço */
+.btn-add:disabled {
+    background-color: #808080 !important;
+    cursor: not-allowed;
+}
