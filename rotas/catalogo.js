@@ -71,11 +71,6 @@ async function Categoria(res, titulo, apiCategoria, origem) {
                     <h1>${titulo}</h1>
                     <a href="/resumo" class="btn-carrinho-topo">Ir ao carrinho</a>
                 </header>
-                
-                <div id="barra-volume" class="barra-status-volume">
-                    Verificando espaço da cesta...
-                </div>
-
                 <section class="vitrine">
                     ${produtosHtml || '<p style="color: black;">Nenhum produto disponível nesta categoria.</p>'}
                 </section>

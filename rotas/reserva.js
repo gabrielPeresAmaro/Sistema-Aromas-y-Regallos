@@ -33,19 +33,13 @@ router.post('/remover', (req, res) => {
 router.get('/resumo', (req, res) => {
     let cesta = req.session.cesta || [];
     let dadosFrete = req.session.frete || { valor: 0, prazo: 0, cidade: '' };
-
-    // 1. Procuramos se o usuário já escolheu alguma cesta
     const cestaEscolhida = cesta.find(item => item.categoria === 'Cesta');
-
-    // 2. Se achou a cesta, o limite máximo é o volume dela. Se não achou, o limite é 0.
     let capacidadeMaxCesta = cestaEscolhida ? cestaEscolhida.volume : 0.00;
 
-    // 3. CORREÇÃO DA SOMA: Filtramos para somar o volume APENAS dos itens que vão dentro dela
     let volumeItensOcupado = cesta
         .filter(item => item.categoria !== 'Cesta')
         .reduce((acc, item) => acc + item.volume, 0);
 
-    // Subtotal de preços e cálculo de frete continuam iguais
     let subtotal = cesta.reduce((acc, item) => acc + item.preco, 0);
     let totalComFrete = subtotal + dadosFrete.valor;
 
@@ -102,7 +96,7 @@ router.get('/resumo', (req, res) => {
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
                     ${cestaEscolhida ? `
                         <p style="color: black; font-size: 0.95rem;">
-                            📦 Modelo da Cesta: <strong>${cestaEscolhida.nome}</strong>
+                            Modelo da Cesta: <strong>${cestaEscolhida.nome}</strong>
                         </p>
                         <h4 style="color: black; margin-top: 5px;">
                             Ocupação do espaço: <span style="color: ${volumeItensOcupado > capacidadeMaxCesta ? 'red' : 'green'}">
@@ -110,7 +104,7 @@ router.get('/resumo', (req, res) => {
                             </span> de ${capacidadeMaxCesta.toFixed(2)}L utilizados
                         </h4>
                     ` : `
-                        <h4 style="color: #ffcc00; margin-top: 5px;">⚠️ Nenhuma cesta adicionada ao pedido ainda.</h4>
+                        <h4 style="color: #ffcc00; margin-top: 5px;">Nenhuma cesta adicionada ao pedido ainda.</h4>
                     `}
                 </div>
                 
@@ -136,10 +130,7 @@ router.get('/resumo', (req, res) => {
     `);
 });
 router.get('/dados-cliente', (req, res) => {
-    // 1. Buscamos o frete que já foi calculado na tela anterior (se não houver, assume vazio)
     let dadosFrete = req.session.frete || { valor: 0, cepCalculado: '', cidade: '' };
-
-    // 2. Se o usuário pulou a tela de resumo sem calcular o frete, mandamos ele de volta
     let cesta = req.session.cesta || [];
     if (cesta.length === 0) {
         return res.redirect('/resumo');
@@ -157,7 +148,7 @@ router.get('/dados-cliente', (req, res) => {
         <title>Dados de Entrega</title>
     </head>
     <body style="color: black; padding: 20px; max-width: 500px; margin: 0 auto;">
-        <h2>Dados para Entrega</h2>
+        <h2>Dados do cliente</h2>
         
         <form action="/tela-confirmacao" method="POST">
             <input type="hidden" name="total" value="${totalGeral}">
@@ -171,12 +162,6 @@ router.get('/dados-cliente', (req, res) => {
             <label for="cep">CEP:</label><br>
             <input type="text" id="cep" name="cep" value="${dadosFrete.cepCalculado}" required readonly style="background: #eee;"><br>
             <small style="color: green;">Endereço identificado: ${dadosFrete.rua}, ${dadosFrete.bairro} - ${dadosFrete.cidade || 'Não informada'}</small><br><br>
-
-            <label for="bairro">Bairro:</label><br>
-            <input type="text" id="bairro" name="bairro" required><br><br>
-
-            <label for="rua">Rua:</label><br>
-            <input type="text" id="rua" name="rua" required><br><br>
 
             <button type="submit" class="btn-item" style="width: 100%;">Confirmar e Registrar Reserva</button>
         </form>
@@ -218,7 +203,7 @@ router.post('/calcular-frete', async (req, res) => {
             cepCalculado: cepDestino,
             cidade: dadosCep.city,
             bairro: dadosCep.district,
-            rua: dadosCep.address
+            rua: dadosCep.address_name
         };
 
         res.redirect('/resumo');
@@ -229,43 +214,99 @@ router.post('/calcular-frete', async (req, res) => {
     }
 });
 
-// 6. ROTA: Finalizar Pedido e Mostrar Sucesso (Antigo conflito resolvido)
-router.post('/tela-confirmacao', (req, res) => {
-    const { nome, cpf, cep, bairro, rua, total } = req.body;
+router.post('/tela-confirmacao', async (req, res) => {
+    // 1. Garante que os dados do frete existem na sessão para evitar quebrar o código
+    if (!req.session.frete) {
+        return res.send('Erro - Informações de frete não encontradas na sessão.<br/><br/><a href="/resumo">Voltar ao Carrinho</a>');
+    }
+
+    let bairro = req.session.frete.bairro;
+    let rua = req.session.frete.rua;
+    let cidade = req.session.frete.cidade || 'Bagé'; // Pega a cidade da API de CEP
+
+    const { nome, cpf, cep, total } = req.body;
     const totalFormatado = parseFloat(total) || 0;
 
-    if (!nome || !cpf || !cep || !bairro || !rua) {
+    if (!nome || !cpf || !cep) {
         return res.send('Erro - não pode haver campo de dado em branco.<br/><br/><a href="/dados-cliente">Voltar</a>');
     }
 
-    // Aqui futuramente você vai rodar o seu INSERT do banco de dados (pool.query)
+    let cesta = req.session.cesta || [];
+    if (cesta.length === 0) {
+        return res.send('Erro - Seu carrinho está vazio.<br/><br/><a href="/catalogo">Voltar ao Catálogo</a>');
+    }
 
-    const html = `
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="/style.css">
-    </head>
-    <body style="color: black; padding: 20px; text-align: center;">
-        <h1 style="color: green;">Pedido Confirmado com sucesso!</h1>
-        <div style="text-align: left; max-width: 400px; margin: 20px auto; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-            <p><strong>Nome:</strong> ${nome}</p>
-            <p><strong>CPF:</strong> ${cpf}</p>
-            <p><strong>CEP:</strong> ${cep}</p>
-            <p><strong>Bairro:</strong> ${bairro}</p>
-            <p><strong>Rua:</strong> ${rua}</p>
-            <h3>Valor Pago Total: R$ ${totalFormatado.toFixed(2)}</h3>
-        </div>
-        <br/><a href="/catalogo" class="btn-item" style="text-decoration:none; display:inline-block;">Voltar ao Catálogo</a>
-    </body>
-    </html>`;
+    try {
+        // 2. Extrai apenas os códigos numéricos dos produtos que estão na cesta do cliente
+        // O seu gestor usa esses códigos para fazer o Produto.findAll() depois
+        const listaCodigos = cesta.map(item => item.codigo || item.id);
 
-    // Limpa o carrinho e o frete da sessão após a compra finalizada com sucesso
-    req.session.cesta = [];
-    req.session.frete = null;
+        // 3. Monta o payload JSON exatamente com as colunas do seu modelo Pedido (Sequelize)
+        const pedidoParaEnviar = {
+            cliente_nome: nome,
+            cliente_cpf_cnpj: cpf,
+            cliente_telefone: "53999999999", // Telefone padrão/temporário exigido pelo banco (NOT NULL)
+            lista_codigos_produtos: listaCodigos, // Passamos o array (o Sequelize no gestor trata como string/JSON)
+            preco_total: totalFormatado,
+            entrega_destinatario_nome: nome,
+            entrega_destinatario_endereco: `${rua}, ${bairro} - ${cidade} - CEP: ${cep}`,
+            entrega_data_horario: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // Simula entrega para daqui a 5 dias
+        };
 
-    res.send(html);
+        // 4. FAZ O INSERT DE FATO: Dispara a requisição para a API salvar no Banco de Dados
+        const respostaApi = await fetch('http://localhost:3001/pedidos/cadastrar', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(pedidoParaEnviar)
+        });
+
+        if (!respostaApi.ok) {
+            const erroTexto = await respostaApi.text();
+            console.error("Erro da API do Gestor:", erroTexto);
+            throw new Error("A API do gestor recusou o cadastro do pedido.");
+        }
+
+        const resultadoBD = await respostaApi.json();
+
+        // Tenta capturar o código do pedido gerado automaticamente pelo banco (AUTO_INCREMENT/SERIAL)
+        const idPedidoGerado = resultadoBD.pedido?.codigo || resultadoBD.pedido?.id || "Gravado";
+
+        // 5. Renderiza a tela bonita com as informações reais vindas da sessão e do formulário
+        const html = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <link rel="stylesheet" href="/style.css">
+            <title>Pedido Confirmado</title>
+        </head>
+        <body style="color: black; padding: 20px; text-align: center;">
+            <h1 style="color: green;">Pedido Confirmado com sucesso!</h1>
+            <div style="text-align: left; max-width: 400px; margin: 20px auto; background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+                <p><strong>Nº do Pedido:</strong> #${idPedidoGerado}</p>
+                <p><strong>Nome:</strong> ${nome}</p>
+                <p><strong>CPF:</strong> ${cpf}</p>
+                <p><strong>CEP:</strong> ${cep}</p>
+                <p><strong>Bairro:</strong> ${bairro}</p>
+                <p><strong>Rua:</strong> ${rua}</p>
+                <h3>Valor Pago Total: R$ ${totalFormatado.toFixed(2)}</h3>
+            </div>
+            <br/><a href="/catalogo" class="btn-item" style="text-decoration:none; display:inline-block;">Voltar ao Catálogo</a>
+        </body>
+        </html>`;
+
+        // Limpa o carrinho e o frete da sessão após a compra finalizada com sucesso
+        req.session.cesta = [];
+        req.session.frete = null;
+
+        res.send(html);
+
+    } catch (erro) {
+        console.error("Erro crítico ao salvar pedido no banco de dados:", erro);
+        res.status(500).send('Erro interno ao processar e salvar seu pedido no sistema gestor.<br/><br/><a href="/resumo">Voltar ao Carrinho</a>');
+    }
 });
-
 module.exports = router;
