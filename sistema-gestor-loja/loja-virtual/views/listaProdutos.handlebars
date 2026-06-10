@@ -2,12 +2,14 @@
 
 <table border="1">
   <tr>
-    <td><b>Código</b></td>
+    <td><b>Codigo</b></td>
     <td><b>Nome</b></td>
     <td><b>Categoria</b></td>
-    <td><b>Preço</b></td>
+    <td><b>Preco</b></td>
+    <td><b>Peso (kg)</b></td>
+    <td><b>Dimensoes (cm)</b></td>
     <td><b>Volume (L)</b></td>
-    <td colspan="3"><b>Operações</b></td>
+    <td colspan="3"><b>Operacoes</b></td>
   </tr>
 
   {{#each produtosBD}}
@@ -16,11 +18,12 @@
     <td>{{nome}}</td>
     <td>{{categoria}}</td>
     <td>{{preco}}</td>
+    <td>{{peso_kg}}</td>
+    <td>{{altura_cm}} x {{largura_cm}} x {{profundidade_cm}}</td>
     <td>{{volume}}</td>
     <td><a href="/produtos/{{codigo}}">Consultar</a></td>
     <td><a href="/produtos/editar/{{codigo}}">Editar</a></td>
     <td><a href="/produtos/excluir/{{codigo}}">Excluir</a></td>
-
   </tr>
   {{/each}}
 

@@ -1,9 +1,12 @@
+require('dotenv').config({ path: '../../.env' });
+
 const express = require('express')
 const cors = require('cors');
 const exphbs = require('express-handlebars');
 const { Sequelize } = require('sequelize');
 const { Op } = require('sequelize');
 const handlebars = require('handlebars'); //adicionado para por o helper do Handlebars
+const { calcularVolumeLitros, normalizarNumero, volumetriaProdutoValida } = require('../../config/volumetria');
 
 const app = express()
 
@@ -44,9 +47,16 @@ handlebars.registerHelper('contains', function (str, substring, options) {
 
 
 
+const nomeBanco = process.env.BANCO_NOME || 'Aromas-y-Regallos';
+const usuarioBanco = process.env.BANCO_USUARIO || 'postgres';
+const senhaBanco = process.env.BANCO_SENHA || 'postgres';
+const hostBanco = process.env.BANCO_HOST || 'localhost';
+const portaBanco = Number.parseInt(process.env.BANCO_PORTA || '5432', 10);
+
 //configuracao do Sequelize
-const sequelize = new Sequelize('Aromas-y-Regallos', 'postgres', 'postgres', {
-    host: 'localhost',
+const sequelize = new Sequelize(nomeBanco, usuarioBanco, senhaBanco, {
+    host: hostBanco,
+    port: portaBanco,
     dialect: 'postgres'
 });
 
@@ -73,6 +83,10 @@ const Produto = sequelize.define('produtos',
         preco: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
         categoria: { type: Sequelize.STRING(30), allowNull: false },
         foto: { type: Sequelize.STRING(255), allowNull: false },
+        altura_cm: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0.00 },
+        largura_cm: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0.00 },
+        profundidade_cm: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0.00 },
+        peso_kg: { type: Sequelize.DECIMAL(10, 3), allowNull: false, defaultValue: 0.000 },
         volume: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0.00 }
     },
     {
@@ -90,12 +104,12 @@ const Pedido = sequelize.define('pedidos',
         codigo: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
         cliente_nome: { type: Sequelize.STRING(100), allowNull: false },
         cliente_cpf_cnpj: { type: Sequelize.STRING(100), allowNull: false },
-        cliente_telefone: { type: Sequelize.STRING(15), allowNull: false },
-        lista_codigos_produtos: { type: Sequelize.STRING(100), allowNull: false },
+        cliente_telefone: { type: Sequelize.STRING(20), allowNull: false },
+        lista_codigos_produtos: { type: Sequelize.STRING(255), allowNull: false },
         preco_total: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
 
         entrega_destinatario_nome: { type: Sequelize.STRING(100), allowNull: false },
-        entrega_destinatario_endereco: { type: Sequelize.STRING(100), allowNull: false },
+        entrega_destinatario_endereco: { type: Sequelize.STRING(255), allowNull: false },
         entrega_data_horario: { type: Sequelize.DATE, allowNull: false },
         data_criacao: { type: Sequelize.DATE, allowNull: false }
     },
@@ -111,6 +125,38 @@ const Pedido = sequelize.define('pedidos',
 app.use(express.urlencoded({ extended: true }));
 // E também para aceitar JSON no body da requisição
 app.use(express.json());
+
+function montarProdutoRecebido(dadosProduto) {
+    const altura_cm = normalizarNumero(dadosProduto.altura_cm);
+    const largura_cm = normalizarNumero(dadosProduto.largura_cm);
+    const profundidade_cm = normalizarNumero(dadosProduto.profundidade_cm);
+    const peso_kg = normalizarNumero(dadosProduto.peso_kg, 3);
+
+    return {
+        nome: dadosProduto.nome,
+        descricao: dadosProduto.descricao,
+        quantidade_estoque: parseInt(dadosProduto.quantidade_estoque),
+        preco: parseFloat(dadosProduto.preco),
+        categoria: dadosProduto.categoria,
+        foto: dadosProduto.foto,
+        altura_cm,
+        largura_cm,
+        profundidade_cm,
+        peso_kg,
+        volume: calcularVolumeLitros(altura_cm, largura_cm, profundidade_cm)
+    };
+}
+
+function dadosBasicosProdutoValidos(produto) {
+    return (
+        Number.isInteger(produto.quantidade_estoque) &&
+        produto.quantidade_estoque >= 0 &&
+        Number.isFinite(produto.preco) &&
+        produto.preco >= 0 &&
+        Boolean(produto.categoria) &&
+        Boolean(produto.foto)
+    );
+}
 
 
 const porta = 3001
@@ -150,21 +196,22 @@ app.get('/produtos/cadastrar', bloquearAcessoExterno, function (req, res) {
 
 app.post('/produtos/cadastrar', function (req, res) {
 
-    const { nome, descricao, quantidade_estoque, preco, categoria, foto, volume } = req.body;
+    const { nome, descricao } = req.body;
 
     if (nome == "" || descricao == "") {
         res.send("Erro - não pode haver campo de dado em branco.");
     }
     else {
-        var umProdutoRecebido = {
-            nome,
-            descricao,
-            quantidade_estoque: parseInt(quantidade_estoque),
-            preco: parseFloat(preco),
-            categoria,
-            foto,
-            volume: parseFloat(volume) || 0.00
-        };
+        var umProdutoRecebido = montarProdutoRecebido(req.body);
+
+        if (!dadosBasicosProdutoValidos(umProdutoRecebido)) {
+            return res.send("Erro - confira estoque, preco, categoria e foto do produto.");
+        }
+
+        if (!volumetriaProdutoValida(umProdutoRecebido)) {
+            return res.send("Erro - informe altura, largura, profundidade e peso validos.");
+        }
+
         Produto.create(umProdutoRecebido);
         res.send("Produto cadastrado com sucesso.");
     }
@@ -217,22 +264,24 @@ app.post('/produtos/salvar-edicao', function (req, res) {
 
     const codigo = req.body.codigo;
 
-    const { nome, descricao, quantidade_estoque, preco, categoria, foto, volume } = req.body;
+    const { nome, descricao } = req.body;
 
     if (nome == "" || descricao == "") {
         res.send("Erro - não pode haver campo de dado em branco.");
     }
     else {
+        const produtoAtualizado = montarProdutoRecebido(req.body);
+
+        if (!dadosBasicosProdutoValidos(produtoAtualizado)) {
+            return res.send("Erro - confira estoque, preco, categoria e foto do produto.");
+        }
+
+        if (!volumetriaProdutoValida(produtoAtualizado)) {
+            return res.send("Erro - informe altura, largura, profundidade e peso validos.");
+        }
+
         Produto.update(
-            {
-                nome,
-                descricao,
-                quantidade_estoque: parseInt(quantidade_estoque),
-                preco: parseFloat(preco),
-                categoria,
-                foto,
-                volume: parseFloat(volume) || 0.00
-            },
+            produtoAtualizado,
             { where: { codigo } }
         );
         res.redirect('/produtos/listar-todos');

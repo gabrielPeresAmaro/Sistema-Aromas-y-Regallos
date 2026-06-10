@@ -36,6 +36,10 @@ async function Categoria(res, titulo, apiCategoria, origem) {
             let imagemProduto = produto.foto;
             let idProduto = produto.codigo || produto.id;
             let volumeProduto = parseFloat(produto.volume) || 0.00;
+            let alturaProduto = parseFloat(produto.altura_cm) || 0.00;
+            let larguraProduto = parseFloat(produto.largura_cm) || 0.00;
+            let profundidadeProduto = parseFloat(produto.profundidade_cm) || 0.00;
+            let pesoProduto = parseFloat(produto.peso_kg) || 0.00;
 
             produtosHtml += `
                 <div class="card-produto">
@@ -49,14 +53,18 @@ async function Categoria(res, titulo, apiCategoria, origem) {
                     <p>R$ ${precoFormatado}</p>
                     
                     <form action="/adicionar" method="POST">
+                        <input type="hidden" name="codigo" value="${idProduto}">
                         <input type="hidden" name="nome" value="${produto.nome}">
                         <input type="hidden" name="preco" value="${produto.preco}">
                         <input type="hidden" name="imagem" value="${imagemProduto}">
                         <input type="hidden" name="origem" value="${origem}">
-                        
                         <input type="hidden" name="volume" value="${volumeProduto}">
+                        <input type="hidden" name="altura_cm" value="${alturaProduto}">
+                        <input type="hidden" name="largura_cm" value="${larguraProduto}">
+                        <input type="hidden" name="profundidade_cm" value="${profundidadeProduto}">
+                        <input type="hidden" name="peso_kg" value="${pesoProduto}">
                         <input type="hidden" name="categoria" value="${produto.categoria}">
-                        
+
                         <button type="submit" class="btn-add">Reservar</button>
                     </form>
                 </div>

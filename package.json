@@ -7,12 +7,17 @@
   "type": "commonjs",
   "main": "App.js",
   "scripts": {
+    "start": "node App.js",
+    "dev": "nodemon App.js",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
   },
   "dependencies": {
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0"
   }

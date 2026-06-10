@@ -32,8 +32,20 @@
     <option {{#if (eq produtoPlano.categoria "Decoração" )}}selected{{/if}} value="Decoração">Decoração</option>
   </select><br><br>
 
-  <label for="volume">Volume / Capacidade (em Litros):</label><br>
-  <input type="number" id="volume" name="volume" value="{{produtoPlano.volume}}" step="0.01" min="0"><br><br>
+  <label for="altura_cm">Altura (cm):</label><br>
+  <input type="number" id="altura_cm" name="altura_cm" value="{{produtoPlano.altura_cm}}" step="0.01" min="0.01"><br><br>
+
+  <label for="largura_cm">Largura (cm):</label><br>
+  <input type="number" id="largura_cm" name="largura_cm" value="{{produtoPlano.largura_cm}}" step="0.01" min="0.01"><br><br>
+
+  <label for="profundidade_cm">Profundidade (cm):</label><br>
+  <input type="number" id="profundidade_cm" name="profundidade_cm" value="{{produtoPlano.profundidade_cm}}" step="0.01" min="0.01"><br><br>
+
+  <label for="peso_kg">Peso (kg):</label><br>
+  <input type="number" id="peso_kg" name="peso_kg" value="{{produtoPlano.peso_kg}}" step="0.001" min="0.001"><br><br>
+
+  <label for="volume">Volume calculado (L):</label><br>
+  <input type="number" id="volume" name="volume" value="{{produtoPlano.volume}}" step="0.01" min="0" readonly><br><br>
 
   <label for="foto">Foto do produto:</label><br>
   <input type="text" id="foto" name="foto" value="{{produtoPlano.foto}}">(PNG/JPG - 80px x 80px)<br><br>
