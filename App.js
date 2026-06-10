@@ -1,5 +1,6 @@
+require('dotenv').config();
+
 const express = require('express');
-const bodyParser = require('body-parser');
 const app = express();
 const porta = 3000;
 const session = require('express-session');
@@ -16,7 +17,7 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: false } // false permite funcionar em localhost sem HTTPS
 }));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'));
 
 app.use('/', rotaInicial);

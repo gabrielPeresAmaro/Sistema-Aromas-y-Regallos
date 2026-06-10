@@ -24,8 +24,19 @@
     <option value="Decoração">Decoração</option>
   </select><br><br>
 
-  <label for="volume">Volume / Capacidade (em Litros):</label><br>
-  <input type="number" id="volume" name="volume" step="0.01" min="0"><br><br>
+  <label for="altura_cm">Altura (cm):</label><br>
+  <input type="number" id="altura_cm" name="altura_cm" step="0.01" min="0.01" required><br><br>
+
+  <label for="largura_cm">Largura (cm):</label><br>
+  <input type="number" id="largura_cm" name="largura_cm" step="0.01" min="0.01" required><br><br>
+
+  <label for="profundidade_cm">Profundidade (cm):</label><br>
+  <input type="number" id="profundidade_cm" name="profundidade_cm" step="0.01" min="0.01" required><br><br>
+
+  <label for="peso_kg">Peso (kg):</label><br>
+  <input type="number" id="peso_kg" name="peso_kg" step="0.001" min="0.001" required><br><br>
+
+  <small>O volume em litros sera calculado automaticamente a partir da volumetria.</small><br><br>
 
   <label for="foto">Foto do produto:</label><br>
   <input type="text" id="foto" name="foto">(PNG/JPG - 80px x 80px)<br><br>

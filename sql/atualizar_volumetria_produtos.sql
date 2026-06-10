@@ -1,0 +1,26 @@
+ALTER TABLE IF EXISTS produtos
+    ADD COLUMN IF NOT EXISTS altura_cm NUMERIC(10, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE IF EXISTS produtos
+    ADD COLUMN IF NOT EXISTS largura_cm NUMERIC(10, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE IF EXISTS produtos
+    ADD COLUMN IF NOT EXISTS profundidade_cm NUMERIC(10, 2) NOT NULL DEFAULT 0;
+
+ALTER TABLE IF EXISTS produtos
+    ADD COLUMN IF NOT EXISTS peso_kg NUMERIC(10, 3) NOT NULL DEFAULT 0;
+
+ALTER TABLE IF EXISTS produtos
+    ALTER COLUMN volume TYPE NUMERIC(10, 2);
+
+UPDATE produtos
+SET volume = ROUND(((altura_cm * largura_cm * profundidade_cm) / 1000.0)::numeric, 2);
+
+ALTER TABLE IF EXISTS pedidos
+    ALTER COLUMN cliente_telefone TYPE VARCHAR(20);
+
+ALTER TABLE IF EXISTS pedidos
+    ALTER COLUMN lista_codigos_produtos TYPE VARCHAR(255);
+
+ALTER TABLE IF EXISTS pedidos
+    ALTER COLUMN entrega_destinatario_endereco TYPE VARCHAR(255);
