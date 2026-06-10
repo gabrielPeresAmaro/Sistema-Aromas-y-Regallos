@@ -1,46 +1,58 @@
 # Sistema Aromas y Regallos
 
-Projeto acadêmico com duas aplicações Node.js:
+Projeto academico com duas aplicacoes Node.js:
 
-- `localhost:3000`: loja pública
+- `localhost:3000`: loja publica
 - `localhost:3001`: gestor local e API de produtos/pedidos
 
-O sistema usa PostgreSQL em Docker e cotação real de frete com Melhor Envio.
+O sistema usa:
+
+- PostgreSQL local
+- pgAdmin, DBeaver ou outro cliente SQL
+- Melhor Envio para cotacao real de frete
 
 ## Tecnologias
 
 - Node.js 20+
 - Express
 - PostgreSQL
-- Docker Desktop
 - Sequelize
 - Melhor Envio
 
 ## Estrutura
 
-- `App.js`: aplicação principal da loja
-- `rotas/`: rotas da loja pública
+- `App.js`: aplicacao principal da loja
+- `rotas/`: rotas da loja publica
 - `sistema-gestor-loja/loja-virtual/app.js`: gestor e API local
-- `docker-compose.yml`: banco local
-- `.env.exemplo`: modelo de variáveis de ambiente
+- `sql/criar_estrutura_banco.sql`: cria as tabelas do zero
+- `sql/atualizar_volumetria_produtos.sql`: ajusta banco antigo
+- `.env.exemplo`: modelo das variaveis de ambiente
 
-## Pré-requisitos
+## Pre-requisitos
 
 Antes de rodar:
 
 1. Instale o `Node.js`
-2. Instale o `Docker Desktop`
-3. Abra o Docker Desktop e espere ele iniciar completamente
+2. Tenha um PostgreSQL local rodando
+3. Use `pgAdmin`, `DBeaver` ou outro cliente para criar o banco e executar os scripts SQL
 
-Se aparecer este erro:
+## Configuracao do banco
+
+Crie um banco PostgreSQL com este nome:
 
 ```text
-open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+Aromas-y-Regallos
 ```
 
-isso significa que o Docker Desktop não está rodando.
+Depois execute o script:
 
-## Configuração
+- [sql/criar_estrutura_banco.sql](C:\Users\confi\OneDrive - GBI COMBUSTIVEIS LTDA\Área de Trabalho\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\criar_estrutura_banco.sql)
+
+Se voce ja tiver um banco antigo criado antes desta atualizacao, execute:
+
+- [sql/atualizar_volumetria_produtos.sql](C:\Users\confi\OneDrive - GBI COMBUSTIVEIS LTDA\Área de Trabalho\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\atualizar_volumetria_produtos.sql)
+
+## Configuracao do .env
 
 Crie um arquivo `.env` na raiz com base no `.env.exemplo`.
 
@@ -56,7 +68,7 @@ Campos principais:
 - `MELHOR_ENVIO_CEP_ORIGEM`
 - `MELHOR_ENVIO_USER_AGENT`
 
-## Instalação
+## Instalacao
 
 Na raiz do projeto:
 
@@ -74,21 +86,7 @@ cd ..\..\
 
 ## Como executar
 
-### 1. Subir o banco
-
-Na raiz:
-
-```powershell
-npm run docker:up
-```
-
-ou
-
-```powershell
-docker compose up -d
-```
-
-### 2. Rodar a loja pública
+### 1. Rodar a loja publica
 
 Em um terminal na raiz:
 
@@ -96,7 +94,7 @@ Em um terminal na raiz:
 npm start
 ```
 
-### 3. Rodar o gestor
+### 2. Rodar o gestor
 
 Em outro terminal:
 
@@ -118,21 +116,19 @@ npm start
 4. Preencha `altura`, `largura`, `profundidade` e `peso`
 5. Abra a loja em `http://localhost:3000`
 6. Monte a cesta
-7. Vá ao carrinho
+7. Va ao carrinho
 8. Informe o CEP de destino
 9. Clique em `Calcular`
 
-O frete será buscado no Melhor Envio usando os dados reais de volumetria.
+O frete sera buscado no Melhor Envio usando os dados reais de volumetria.
 
-## Scripts úteis
+## Scripts uteis
 
 Na raiz:
 
 ```powershell
 npm start
 npm run dev
-npm run docker:up
-npm run docker:down
 ```
 
 No gestor:
@@ -144,16 +140,4 @@ npm run dev
 
 ## Encerrar o ambiente
 
-Para parar o banco:
-
-```powershell
-npm run docker:down
-```
-
-ou
-
-```powershell
-docker compose down
-```
-
-Para parar as aplicações Node.js, use `Ctrl + C` em cada terminal.
+Para parar as aplicacoes Node.js, use `Ctrl + C` em cada terminal.
