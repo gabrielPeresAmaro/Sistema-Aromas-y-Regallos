@@ -121,6 +121,8 @@ async function Categoria(res, titulo, apiCategoria, origem) {
 
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.has('sucesso')) alert('Item adicionado à sua cesta!');
+                    if (urlParams.get('erro_estoque') === '1') alert('Este produto nao possui estoque disponivel no momento.');
+                    if (urlParams.get('erro_estoque') === '2') alert('Nao foi possivel validar o estoque agora. Tente novamente.');
                     if (urlParams.has('excluido')) alert('Produto removido do sistema!');
                 </script>
             </body>
