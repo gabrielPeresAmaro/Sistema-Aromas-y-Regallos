@@ -158,6 +158,20 @@ function dadosBasicosProdutoValidos(produto) {
     );
 }
 
+function contarCodigosProdutos(listaCodigosProdutos) {
+    const listaNormalizada = Array.isArray(listaCodigosProdutos)
+        ? listaCodigosProdutos
+        : String(listaCodigosProdutos || '')
+            .split(',')
+            .map(codigo => Number.parseInt(String(codigo).trim(), 10))
+            .filter(Number.isInteger);
+
+    return listaNormalizada.reduce((acumulador, codigoProduto) => {
+        acumulador[codigoProduto] = (acumulador[codigoProduto] || 0) + 1;
+        return acumulador;
+    }, {});
+}
+
 
 const porta = 3001
 const ipDoServidor = 'localhost'
@@ -242,6 +256,25 @@ app.get('/produtos/:codigoProduto', bloquearAcessoExterno, async function (req, 
     } catch (err) {
         console.error(err);
         res.status(500).send("Erro ao buscar produto");
+    }
+});
+
+app.get('/produtos/codigo/:codigoProduto/json', cors(corsOptions), async function (req, res) {
+
+    const codigo = req.params.codigoProduto;
+
+    try {
+        const produtoBD = await Produto.findByPk(codigo);
+
+        if (!produtoBD) {
+            return res.status(404).json({ erro: "Produto não encontrado." });
+        }
+
+        res.status(200).json(produtoBD.get({ plain: true }));
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ erro: "Erro ao buscar produto" });
     }
 });
 
@@ -371,6 +404,8 @@ app.get('/pedidos/:codigoPedido', bloquearAcessoExterno, async function (req, re
 
 // Cadastrar pedido a partir de um objeto Pedido JSON
 app.post('/pedidos/cadastrar', cors(corsOptions), async (req, res) => {
+    const transaction = await sequelize.transaction();
+
     try {
         const {
             cliente_nome,
@@ -385,10 +420,46 @@ app.post('/pedidos/cadastrar', cors(corsOptions), async (req, res) => {
 
         // validação básica
         if (!cliente_nome || !cliente_cpf_cnpj || !cliente_telefone || !lista_codigos_produtos || !preco_total || !entrega_destinatario_nome || !entrega_destinatario_endereco || !entrega_data_horario) {
+            await transaction.rollback();
             return res.status(400).json({ erro: "Dados incompletos." });
         }
 
-        // Insert no banco de dados
+        const contagemProdutos = contarCodigosProdutos(lista_codigos_produtos);
+        const codigosProdutos = Object.keys(contagemProdutos).map(codigo => Number.parseInt(codigo, 10));
+        const produtosBD = await Produto.findAll({
+            where: {
+                codigo: {
+                    [Op.in]: codigosProdutos
+                }
+            },
+            transaction,
+            lock: transaction.LOCK.UPDATE
+        });
+
+        if (produtosBD.length !== codigosProdutos.length) {
+            await transaction.rollback();
+            return res.status(409).json({ erro: "Existe produto no pedido que nao foi encontrado." });
+        }
+
+        for (const produtoBD of produtosBD) {
+            const quantidadeSolicitada = contagemProdutos[produtoBD.codigo] || 0;
+
+            if (produtoBD.quantidade_estoque < quantidadeSolicitada) {
+                await transaction.rollback();
+                return res.status(409).json({
+                    erro: `Estoque insuficiente para o produto ${produtoBD.nome}. Disponivel: ${produtoBD.quantidade_estoque}.`
+                });
+            }
+        }
+
+        for (const produtoBD of produtosBD) {
+            const quantidadeSolicitada = contagemProdutos[produtoBD.codigo] || 0;
+
+            await produtoBD.update({
+                quantidade_estoque: produtoBD.quantidade_estoque - quantidadeSolicitada
+            }, { transaction });
+        }
+
         const novoPedidoBD = await Pedido.create({
             cliente_nome,
             cliente_cpf_cnpj,
@@ -401,11 +472,14 @@ app.post('/pedidos/cadastrar', cors(corsOptions), async (req, res) => {
             entrega_destinatario_endereco,
             entrega_data_horario,
             data_criacao: new Date()
-        });
+        }, { transaction });
+
+        await transaction.commit();
 
         res.status(201).json({ mensagem: "Pedido cadastrado com sucesso", pedido: novoPedidoBD });
 
     } catch (erro) {
+        await transaction.rollback();
         console.error(erro);
         res.status(500).json({ erro: "Erro ao cadastrar o pedido" });
     }
@@ -452,6 +526,9 @@ app.get('/produtos/categoria/:categoria', cors(corsOptions), async function (req
 
         const produtosBD = await Produto.findAll({
             where: {
+                quantidade_estoque: {
+                    [Op.gt]: 0
+                },
                 categoria: {
                     [Op.iLike]: categoriaBD
                 }
