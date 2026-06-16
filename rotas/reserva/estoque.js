@@ -29,20 +29,29 @@ async function obterProdutoNoGestor(codigoProduto) {
     return respostaApi.json();
 }
 
-async function validarEstoqueCesta(cesta) {
+async function validarEstoqueCesta(cesta, opcoes = {}) {
+    const aceitarFalhaConsulta = opcoes.aceitarFalhaConsulta === true;
     const contagemItens = contarItensPorCodigo(cesta);
     const codigosProdutos = Object.keys(contagemItens).map(codigo => Number.parseInt(codigo, 10));
 
-    for (const codigoProduto of codigosProdutos) {
-        const produto = await obterProdutoNoGestor(codigoProduto);
+    try {
+        for (const codigoProduto of codigosProdutos) {
+            const produto = await obterProdutoNoGestor(codigoProduto);
 
-        if (!produto) {
-            return { valido: false };
+            if (!produto) {
+                return { valido: false };
+            }
+
+            if (Number.parseInt(produto.quantidade_estoque, 10) < contagemItens[codigoProduto]) {
+                return { valido: false };
+            }
+        }
+    } catch (erro) {
+        if (aceitarFalhaConsulta) {
+            return { valido: true, validacaoIgnorada: true };
         }
 
-        if (Number.parseInt(produto.quantidade_estoque, 10) < contagemItens[codigoProduto]) {
-            return { valido: false };
-        }
+        throw erro;
     }
 
     return { valido: true };

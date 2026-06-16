@@ -60,7 +60,7 @@ router.post('/adicionar', async (req, res) => {
     try {
         cestaAtualizada.push(item);
 
-        const validacaoEstoque = await validarEstoqueCesta(cestaAtualizada);
+        const validacaoEstoque = await validarEstoqueCesta(cestaAtualizada, { aceitarFalhaConsulta: true });
 
         if (!validacaoEstoque.valido) {
             return res.redirect(`${paginaOrigem}?erro_estoque=1`);
