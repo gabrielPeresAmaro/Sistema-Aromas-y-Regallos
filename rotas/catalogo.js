@@ -40,6 +40,7 @@ async function Categoria(res, titulo, apiCategoria, origem) {
             let larguraProduto = parseFloat(produto.largura_cm) || 0.00;
             let profundidadeProduto = parseFloat(produto.profundidade_cm) || 0.00;
             let pesoProduto = parseFloat(produto.peso_kg) || 0.00;
+            let estoqueProduto = Number.parseInt(produto.quantidade_estoque, 10) || 0;
 
             produtosHtml += `
                 <div class="card-produto">
@@ -51,6 +52,7 @@ async function Categoria(res, titulo, apiCategoria, origem) {
                     </p>
                     
                     <p>R$ ${precoFormatado}</p>
+                    <p>Estoque: ${estoqueProduto}</p>
                     
                     <form action="/adicionar" method="POST">
                         <input type="hidden" name="codigo" value="${idProduto}">

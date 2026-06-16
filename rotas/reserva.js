@@ -289,7 +289,10 @@ async function registrarPedidoNoGestor(dadosCliente, cesta, dadosFrete, totalFor
     if (!respostaApi.ok) {
         const erroTexto = await respostaApi.text();
         console.error('Erro da API do gestor:', erroTexto);
-        throw new Error('A API do gestor recusou o cadastro do pedido.');
+        const erroCadastroPedido = new Error('A API do gestor recusou o cadastro do pedido.');
+        erroCadastroPedido.status = respostaApi.status;
+        erroCadastroPedido.detalhes = erroTexto;
+        throw erroCadastroPedido;
     }
 
     const resultadoBD = await respostaApi.json();
@@ -313,6 +316,64 @@ function obterMensagemErroFrete(codigoErro) {
     };
 
     return mensagens[String(codigoErro || '')] || 'Nao foi possivel calcular o frete agora.';
+}
+
+function obterMensagemErroEstoque(codigoErro) {
+    const mensagens = {
+        '1': 'Este produto nao possui estoque disponivel no momento.',
+        '2': 'Nao foi possivel validar o estoque agora. Tente novamente.',
+        '3': 'Um ou mais produtos do carrinho ficaram sem estoque. Revise o pedido antes de pagar.'
+    };
+
+    return mensagens[String(codigoErro || '')] || 'Nao foi possivel validar o estoque agora.';
+}
+
+function contarItensPorCodigo(cesta) {
+    return cesta.reduce((acumulador, item) => {
+        if (!Number.isInteger(item.codigo)) {
+            return acumulador;
+        }
+
+        acumulador[item.codigo] = (acumulador[item.codigo] || 0) + 1;
+        return acumulador;
+    }, {});
+}
+
+async function obterProdutoNoGestor(codigoProduto) {
+    const respostaApi = await fetch(`http://localhost:3001/produtos/codigo/${codigoProduto}/json`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+
+    if (respostaApi.status === 404) {
+        return null;
+    }
+
+    if (!respostaApi.ok) {
+        throw new Error('ERRO_AO_CONSULTAR_PRODUTO');
+    }
+
+    return respostaApi.json();
+}
+
+async function validarEstoqueCesta(cesta) {
+    const contagemItens = contarItensPorCodigo(cesta);
+    const codigosProdutos = Object.keys(contagemItens).map(codigo => Number.parseInt(codigo, 10));
+
+    for (const codigoProduto of codigosProdutos) {
+        const produto = await obterProdutoNoGestor(codigoProduto);
+
+        if (!produto) {
+            return { valido: false };
+        }
+
+        if (Number.parseInt(produto.quantidade_estoque, 10) < contagemItens[codigoProduto]) {
+            return { valido: false };
+        }
+    }
+
+    return { valido: true };
 }
 
 function montarProdutosMelhorEnvio(cesta) {
@@ -436,7 +497,7 @@ async function cotarFreteMelhorEnvio(cesta, cepDestino) {
     return opcoesNormalizadas;
 }
 
-router.post('/adicionar', (req, res) => {
+router.post('/adicionar', async (req, res) => {
     if (!req.session.cesta) {
         req.session.cesta = [];
     }
@@ -455,16 +516,31 @@ router.post('/adicionar', (req, res) => {
         imagem: req.body.imagem
     };
 
+    const paginaOrigem = req.body.origem || '/catalogo';
+    let cestaAtualizada = [...req.session.cesta];
+
     if (item.categoria === 'Cesta') {
-        req.session.cesta = req.session.cesta.filter(itemAtual => itemAtual.categoria !== 'Cesta');
+        cestaAtualizada = cestaAtualizada.filter(itemAtual => itemAtual.categoria !== 'Cesta');
     }
 
-    req.session.cesta.push(item);
-    req.session.frete = null;
-    req.session.opcoesFrete = [];
+    try {
+        cestaAtualizada.push(item);
 
-    const paginaOrigem = req.body.origem || '/catalogo';
-    res.redirect(`${paginaOrigem}?sucesso=1`);
+        const validacaoEstoque = await validarEstoqueCesta(cestaAtualizada);
+
+        if (!validacaoEstoque.valido) {
+            return res.redirect(`${paginaOrigem}?erro_estoque=1`);
+        }
+
+        req.session.cesta = cestaAtualizada;
+        req.session.frete = null;
+        req.session.opcoesFrete = [];
+
+        res.redirect(`${paginaOrigem}?sucesso=1`);
+    } catch (erro) {
+        console.error('Erro ao validar estoque no carrinho:', erro.message || erro);
+        res.redirect(`${paginaOrigem}?erro_estoque=2`);
+    }
 });
 
 router.post('/remover', (req, res) => {
@@ -596,6 +672,7 @@ router.get('/resumo', (req, res) => {
             <script>
                 const urlParams = new URLSearchParams(window.location.search);
                 const codigoErroFrete = urlParams.get('erro_frete');
+                const codigoErroEstoque = urlParams.get('erro_estoque');
 
                 if (codigoErroFrete) {
                     const mapaMensagens = {
@@ -609,6 +686,17 @@ router.get('/resumo', (req, res) => {
                     };
 
                     alert(mapaMensagens[codigoErroFrete] || '${obterMensagemErroFrete('0')}');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
+                if (codigoErroEstoque) {
+                    const mapaMensagensEstoque = {
+                        '1': '${obterMensagemErroEstoque('1')}',
+                        '2': '${obterMensagemErroEstoque('2')}',
+                        '3': '${obterMensagemErroEstoque('3')}'
+                    };
+
+                    alert(mapaMensagensEstoque[codigoErroEstoque] || '${obterMensagemErroEstoque('0')}');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             </script>
@@ -815,6 +903,12 @@ router.post('/iniciar-pagamento', async (req, res) => {
     }
 
     try {
+        const validacaoEstoque = await validarEstoqueCesta(cesta);
+
+        if (!validacaoEstoque.valido) {
+            return res.redirect('/resumo?erro_estoque=3');
+        }
+
         const dadosCliente = {
             nome,
             email,
@@ -952,6 +1046,16 @@ router.get('/pagamento/sucesso', async (req, res) => {
         res.send(html);
     } catch (erro) {
         console.error('Erro ao confirmar pagamento com Mercado Pago:', erro.detalhes || erro.message || erro);
+
+        if (erro.status === 409) {
+            return res.status(409).send(montarHtmlMensagem(
+                'Estoque indisponivel',
+                'O pagamento foi aprovado, mas um dos itens ficou sem estoque antes da confirmacao do pedido. Revise o pedido no gestor antes de seguir.',
+                'Voltar ao carrinho',
+                '/resumo'
+            ));
+        }
+
         res.status(500).send(montarHtmlMensagem(
             'Erro ao confirmar pedido',
             'O pagamento foi retornado, mas nao conseguimos concluir a gravacao do pedido agora.',
