@@ -8,6 +8,16 @@ O sistema usa:
 - PostgreSQL local
 - pgAdmin, DBeaver ou outro cliente SQL
 - Melhor Envio para cotacao real de frete
+- Mercado Pago para pagamento
+
+## Tecnologias
+
+- Node.js 20+
+- Express
+- PostgreSQL
+- Sequelize
+- Melhor Envio
+- Mercado Pago Checkout Pro
 
 ## Estrutura
 
@@ -57,6 +67,9 @@ Campos principais:
 - `MELHOR_ENVIO_TOKEN`
 - `MELHOR_ENVIO_CEP_ORIGEM`
 - `MELHOR_ENVIO_USER_AGENT`
+- `MERCADO_PAGO_AMBIENTE`
+- `MERCADO_PAGO_ACCESS_TOKEN`
+- `MERCADO_PAGO_URL_LOJA`
 
 ## Instalacao
 
@@ -109,8 +122,40 @@ npm start
 7. Va ao carrinho
 8. Informe o CEP de destino
 9. Clique em `Calcular`
+10. Preencha os dados do cliente
+11. Clique em `Ir para Pagamento`
 
 O frete sera buscado no Melhor Envio usando os dados reais de volumetria.
+
+## Fluxo de pagamento
+
+O checkout foi mantido simples:
+
+1. O cliente monta a cesta
+2. Calcula o frete pelo Melhor Envio
+3. Preenche os dados de entrega
+4. O sistema cria uma preferencia no Mercado Pago
+5. O cliente paga no checkout do Mercado Pago
+6. Depois do pagamento aprovado, o pedido e gravado no sistema gestor
+
+## Observacao importante sobre teste local
+
+O sistema funciona localmente com:
+
+- PostgreSQL local
+- pgAdmin, DBeaver ou outro cliente
+- Loja em `http://localhost:3000`
+- Gestor em `http://localhost:3001`
+
+Para criar o pagamento no Mercado Pago, isso ja basta.
+
+Para o retorno automatico do checkout do Mercado Pago, o mais seguro em ambiente real e usar uma URL publica em `MERCADO_PAGO_URL_LOJA`, porque o Mercado Pago pode limitar retornos com `localhost`.
+
+Se quiser testar o retorno completo fora do localhost, voce pode usar uma URL publica temporaria e colocar essa URL na variavel:
+
+```text
+MERCADO_PAGO_URL_LOJA=https://sua-url-publica
+```
 
 ## Scripts uteis
 
