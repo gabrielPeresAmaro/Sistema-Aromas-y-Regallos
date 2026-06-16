@@ -1,7 +1,5 @@
 # Sistema Aromas y Regallos
 
-Projeto academico com duas aplicacoes Node.js:
-
 - `localhost:3000`: loja publica
 - `localhost:3001`: gestor local e API de produtos/pedidos
 
@@ -48,11 +46,11 @@ Aromas-y-Regallos
 
 Depois execute o script:
 
-- [sql/criar_estrutura_banco.sql](C:\Users\confi\OneDrive - GBI COMBUSTIVEIS LTDA\Área de Trabalho\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\criar_estrutura_banco.sql)
+- [sql/criar_estrutura_banco.sql](\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\criar_estrutura_banco.sql)
 
 Se voce ja tiver um banco antigo criado antes desta atualizacao, execute:
 
-- [sql/atualizar_volumetria_produtos.sql](C:\Users\confi\OneDrive - GBI COMBUSTIVEIS LTDA\Área de Trabalho\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\atualizar_volumetria_produtos.sql)
+- [sql/atualizar_volumetria_produtos.sql](\sistema-aromas-y-regallos\Sistema-Aromas-y-Regallos\sql\atualizar_volumetria_produtos.sql)
 
 ## Configuracao do .env
 
